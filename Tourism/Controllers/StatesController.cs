@@ -14,9 +14,18 @@ namespace Tourism.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(string? timeZone)
         {
-            var states = _context.States.ToList();
+            var states = _context.States.AsEnumerable();
+
+            if(timeZone != null)
+            {
+                states = states.Where(s => s.TimeZone == timeZone);
+                ViewData["SearchZone"] = timeZone;
+            }
+
+            ViewData["AllZones"] = _context.States.Select(s => s.TimeZone).Distinct().ToList();
+
             return View(states);
         }
 
@@ -40,6 +49,34 @@ namespace Tourism.Controllers
         {
             var state = _context.States.Find(stateId);
             return View(state);
+        }
+
+        [Route("states/{id:int}/edit")]
+        public IActionResult Edit(int id)
+        {
+            var state = _context.States.Find(id);
+            return View(state);
+        }
+
+        [HttpPost]
+        [Route("states/{id:int}")]
+        public IActionResult Update(int id, State state)
+        {
+            state.Id = id;
+            _context.States.Update(state);
+            _context.SaveChanges();
+
+            return Redirect("/states");
+        }
+
+        [HttpPost]
+        public IActionResult Delete(int id)
+        {
+            var state = _context.States.Find(id);
+            _context.States.Remove(state);
+            _context.SaveChanges();
+
+            return Redirect("/states");
         }
     }
 }
